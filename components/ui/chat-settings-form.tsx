@@ -41,7 +41,7 @@ export const ChatSettingsForm: FC<ChatSettingsFormProps> = ({
   return (
     <div className="space-y-3">
       <div className="space-y-1">
-        <Label>Model</Label>
+        <Label>LLM Model SELECT</Label>
 
         <ModelSelect
           hostedModelOptions={LLM_LIST}
