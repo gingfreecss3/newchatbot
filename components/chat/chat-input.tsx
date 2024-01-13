@@ -1,5 +1,6 @@
 import { ChatbotUIContext } from "@/context/context"
 import useHotkey from "@/lib/hooks/use-hotkey"
+import { LLM_LIST } from "@/lib/models/llm/llm-list"
 import { cn } from "@/lib/utils"
 import {
   IconCirclePlus,
@@ -34,7 +35,8 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
     isPromptPickerOpen,
     setIsPromptPickerOpen,
     isAtPickerOpen,
-    setFocusFile
+    setFocusFile,
+    chatSettings
   } = useContext(ChatbotUIContext)
 
   const {
@@ -63,14 +65,40 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
       handleSendMessage(userInput, chatMessages, false)
     }
 
-    if (event.key === "Tab" && isPromptPickerOpen) {
+    if (
+      isPromptPickerOpen &&
+      (event.key === "Tab" ||
+        event.key === "ArrowUp" ||
+        event.key === "ArrowDown")
+    ) {
       event.preventDefault()
       setFocusPrompt(!focusPrompt)
     }
 
-    if (event.key === "Tab" && isAtPickerOpen) {
+    if (
+      isAtPickerOpen &&
+      (event.key === "Tab" ||
+        event.key === "ArrowUp" ||
+        event.key === "ArrowDown")
+    ) {
       event.preventDefault()
       setFocusFile(!focusFile)
+    }
+  }
+
+  const handlePaste = (event: React.ClipboardEvent) => {
+    const imagesAllowed = LLM_LIST.find(
+      llm => llm.modelId === chatSettings?.model
+    )?.imageInput
+    if (!imagesAllowed) return
+
+    const items = event.clipboardData.items
+    for (const item of items) {
+      if (item.type.indexOf("image") === 0) {
+        const file = item.getAsFile()
+        if (!file) return
+        handleSelectDeviceFile(file)
+      }
     }
   }
 
@@ -106,12 +134,13 @@ export const ChatInput: FC<ChatInputProps> = ({}) => {
         <TextareaAutosize
           textareaRef={chatInputRef}
           className="ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring text-md flex w-full resize-none rounded-md border-none bg-transparent px-14 py-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50"
-          placeholder="Send a message..."
+          placeholder={`Ask anything. Type "@" for files. Type "/" for prompts.`}
           onValueChange={handleInputChange}
           value={userInput}
           minRows={1}
-          maxRows={20}
+          maxRows={18}
           onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
         />
 
         <div className="absolute bottom-[14px] right-3 cursor-pointer hover:opacity-50">

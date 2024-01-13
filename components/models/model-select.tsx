@@ -28,7 +28,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
   selectedModelId,
   onSelectModel
 }) => {
-  const { profile } = useContext(ChatbotUIContext)
+  const { profile, availableLocalModels } = useContext(ChatbotUIContext)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const triggerRef = useRef<HTMLButtonElement>(null)
@@ -37,6 +37,8 @@ export const ModelSelect: FC<ModelSelectProps> = ({
   const [search, setSearch] = useState("")
   const [tab, setTab] = useState<"hosted" | "local">("hosted")
 
+  const [isLocked, setIsLocked] = useState<Boolean>(true)
+
   useEffect(() => {
     if (isOpen) {
       setTimeout(() => {
@@ -44,6 +46,17 @@ export const ModelSelect: FC<ModelSelectProps> = ({
       }, 100) // FIX: hacky
     }
   }, [isOpen])
+
+  useEffect(() => {
+    const checkModelLock = async () => {
+      if (SELECTED_MODEL && profile) {
+        const locked = await isModelLocked(SELECTED_MODEL.provider, profile)
+        setIsLocked(locked)
+      }
+    }
+
+    checkModelLock()
+  }, [profile])
 
   const handleSelectModel = (modelId: LLMID) => {
     onSelectModel(modelId)
@@ -71,7 +84,7 @@ export const ModelSelect: FC<ModelSelectProps> = ({
   if (!SELECTED_MODEL) return null
   if (!profile) return null
 
-  const isLocked = isModelLocked(SELECTED_MODEL.provider, profile)
+  const usingLocalModels = availableLocalModels.length > 0
 
   return (
     <DropdownMenu
@@ -124,10 +137,13 @@ export const ModelSelect: FC<ModelSelectProps> = ({
         align="start"
       >
         <Tabs value={tab} onValueChange={(value: any) => setTab(value)}>
-          <TabsList defaultValue="hosted" className="grid grid-cols-2">
-            <TabsTrigger value="hosted">Hosted</TabsTrigger>
-            <TabsTrigger value="local">Local</TabsTrigger>
-          </TabsList>
+          {usingLocalModels && (
+            <TabsList defaultValue="hosted" className="grid grid-cols-2">
+              <TabsTrigger value="hosted">Hosted</TabsTrigger>
+
+              <TabsTrigger value="local">Local</TabsTrigger>
+            </TabsList>
+          )}
         </Tabs>
 
         <Input
