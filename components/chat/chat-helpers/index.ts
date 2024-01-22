@@ -151,7 +151,7 @@ export const handleLocalChat = async (
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>,
   setFirstTokenReceived: React.Dispatch<React.SetStateAction<boolean>>,
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-  setToolInUse: React.Dispatch<React.SetStateAction<"none" | "retrieval">>
+  setToolInUse: React.Dispatch<React.SetStateAction<string>>
 ) => {
   const formattedMessages = await buildFinalMessages(payload, profile, [])
 
@@ -196,7 +196,7 @@ export const handleHostedChat = async (
   setIsGenerating: React.Dispatch<React.SetStateAction<boolean>>,
   setFirstTokenReceived: React.Dispatch<React.SetStateAction<boolean>>,
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-  setToolInUse: React.Dispatch<React.SetStateAction<"none" | "retrieval">>
+  setToolInUse: React.Dispatch<React.SetStateAction<string>>
 ) => {
   const provider =
     modelData.provider === "openai" && profile.use_azure_openai
@@ -219,7 +219,8 @@ export const handleHostedChat = async (
     `/api/chat/${provider}`,
     {
       chatSettings: payload.chatSettings,
-      messages: formattedMessages
+      messages: formattedMessages,
+      tools: []
     },
     true,
     newAbortController,
@@ -279,46 +280,50 @@ export const processResponse = async (
   controller: AbortController,
   setFirstTokenReceived: React.Dispatch<React.SetStateAction<boolean>>,
   setChatMessages: React.Dispatch<React.SetStateAction<ChatMessage[]>>,
-  setToolInUse: React.Dispatch<React.SetStateAction<"none" | "retrieval">>
+  setToolInUse: React.Dispatch<React.SetStateAction<string>>
 ) => {
   let fullText = ""
   let contentToAdd = ""
 
-  await consumeReadableStream(
-    response.body,
-    (chunk: any) => {
-      setFirstTokenReceived(true)
-      setToolInUse("none")
+  if (response.body) {
+    await consumeReadableStream(
+      response.body,
+      chunk => {
+        setFirstTokenReceived(true)
+        setToolInUse("none")
 
-      try {
-        contentToAdd = isHosted ? chunk : JSON.parse(chunk).message.content
-        fullText += contentToAdd
-      } catch (error) {
-        console.error("Error parsing JSON:", error)
-      }
+        try {
+          contentToAdd = isHosted ? chunk : JSON.parse(chunk).message.content
+          fullText += contentToAdd
+        } catch (error) {
+          console.error("Error parsing JSON:", error)
+        }
 
-      setChatMessages(prev =>
-        prev.map(chatMessage => {
-          if (chatMessage.message.id === lastChatMessage.message.id) {
-            const updatedChatMessage: ChatMessage = {
-              message: {
-                ...chatMessage.message,
-                content: chatMessage.message.content + contentToAdd
-              },
-              fileItems: chatMessage.fileItems
+        setChatMessages(prev =>
+          prev.map(chatMessage => {
+            if (chatMessage.message.id === lastChatMessage.message.id) {
+              const updatedChatMessage: ChatMessage = {
+                message: {
+                  ...chatMessage.message,
+                  content: chatMessage.message.content + contentToAdd
+                },
+                fileItems: chatMessage.fileItems
+              }
+
+              return updatedChatMessage
             }
 
-            return updatedChatMessage
-          }
+            return chatMessage
+          })
+        )
+      },
+      controller.signal
+    )
 
-          return chatMessage
-        })
-      )
-    },
-    controller.signal
-  )
-
-  return fullText
+    return fullText
+  } else {
+    throw new Error("Response body is null")
+  }
 }
 
 export const handleCreateChat = async (
