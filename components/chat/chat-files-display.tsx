@@ -115,7 +115,7 @@ export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
         </div>
 
         <div className="overflow-auto">
-          <div className="flex flex-wrap gap-2 truncate pt-2">
+          <div className="flex gap-2 overflow-auto pt-2">
             {messageImages.map((image, index) => (
               <div
                 key={index}
@@ -226,7 +226,7 @@ export const ChatFilesDisplay: FC<ChatFilesDisplayProps> = ({}) => {
     </>
   ) : (
     combinedMessageFiles.length > 0 && (
-      <div className="mb-4 flex w-full items-center justify-center space-x-2">
+      <div className="flex w-full items-center justify-center space-x-2">
         <Button
           className="flex h-[32px] w-[140px] space-x-2"
           onClick={() => setShowFilesDisplay(true)}

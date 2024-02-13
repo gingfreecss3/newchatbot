@@ -818,6 +818,7 @@ export interface Database {
       }
       messages: {
         Row: {
+          assistant_id: string | null
           chat_id: string
           content: string
           created_at: string
@@ -830,6 +831,7 @@ export interface Database {
           user_id: string
         }
         Insert: {
+          assistant_id?: string | null
           chat_id: string
           content: string
           created_at?: string
@@ -842,6 +844,7 @@ export interface Database {
           user_id: string
         }
         Update: {
+          assistant_id?: string | null
           chat_id?: string
           content?: string
           created_at?: string
@@ -855,6 +858,13 @@ export interface Database {
         }
         Relationships: [
           {
+            foreignKeyName: "messages_assistant_id_fkey"
+            columns: ["assistant_id"]
+            isOneToOne: false
+            referencedRelation: "assistants"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "messages_chat_id_fkey"
             columns: ["chat_id"]
             isOneToOne: false
@@ -863,6 +873,112 @@ export interface Database {
           },
           {
             foreignKeyName: "messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      model_workspaces: {
+        Row: {
+          created_at: string
+          model_id: string
+          updated_at: string | null
+          user_id: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          model_id: string
+          updated_at?: string | null
+          user_id: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          model_id?: string
+          updated_at?: string | null
+          user_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_workspaces_model_id_fkey"
+            columns: ["model_id"]
+            isOneToOne: false
+            referencedRelation: "models"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "model_workspaces_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "model_workspaces_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      models: {
+        Row: {
+          api_key: string
+          base_url: string
+          context_length: number
+          created_at: string
+          description: string
+          folder_id: string | null
+          id: string
+          model_id: string
+          name: string
+          sharing: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          api_key: string
+          base_url: string
+          context_length?: number
+          created_at?: string
+          description: string
+          folder_id?: string | null
+          id?: string
+          model_id: string
+          name: string
+          sharing?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          api_key?: string
+          base_url?: string
+          context_length?: number
+          created_at?: string
+          description?: string
+          folder_id?: string | null
+          id?: string
+          model_id?: string
+          name?: string
+          sharing?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "models_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "folders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "models_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
@@ -1220,6 +1336,7 @@ export interface Database {
       tools: {
         Row: {
           created_at: string
+          custom_headers: Json
           description: string
           folder_id: string | null
           id: string
@@ -1232,11 +1349,12 @@ export interface Database {
         }
         Insert: {
           created_at?: string
+          custom_headers?: Json
           description: string
           folder_id?: string | null
           id?: string
           name: string
-          schema: Json
+          schema?: Json
           sharing?: string
           updated_at?: string | null
           url: string
@@ -1244,6 +1362,7 @@ export interface Database {
         }
         Update: {
           created_at?: string
+          custom_headers?: Json
           description?: string
           folder_id?: string | null
           id?: string
@@ -1281,6 +1400,7 @@ export interface Database {
           description: string
           embeddings_provider: string
           id: string
+          image_path: string
           include_profile_context: boolean
           include_workspace_instructions: boolean
           instructions: string
@@ -1299,6 +1419,7 @@ export interface Database {
           description: string
           embeddings_provider: string
           id?: string
+          image_path?: string
           include_profile_context: boolean
           include_workspace_instructions: boolean
           instructions: string
@@ -1317,6 +1438,7 @@ export interface Database {
           description?: string
           embeddings_provider?: string
           id?: string
+          image_path?: string
           include_profile_context?: boolean
           include_workspace_instructions?: boolean
           instructions?: string
@@ -1414,6 +1536,12 @@ export interface Database {
         Returns: boolean
       }
       non_private_file_exists: {
+        Args: {
+          p_name: string
+        }
+        Returns: boolean
+      }
+      non_private_workspace_exists: {
         Args: {
           p_name: string
         }
